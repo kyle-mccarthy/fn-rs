@@ -6,6 +6,7 @@ use actix_web::{Error, HttpRequest, HttpResponse};
 use futures::{Future, Stream};
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 pub struct FuncConfig {
     pub script: String,
@@ -23,6 +24,29 @@ pub struct FunctionError {
     error: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FunctionRequest<'a> {
+    path: &'a str,
+    method: &'a str,
+    headers: HashMap<&'a str, &'a str>,
+    query_string: &'a str,
+
+    #[serde(skip, default)]
+    inner: Option<&'a HttpRequest>,
+}
+
+impl<'a> FunctionRequest<'a> {
+    fn from_http_request(req: &'a HttpRequest) -> FunctionRequest<'a> {
+        FunctionRequest {
+            path: req.path(),
+            method: req.method().as_str(),
+            headers: HashMap::new(),
+            query_string: req.query_string(),
+            inner: Some(req),
+        }
+    }
+}
+
 #[allow(dead_code)]
 pub(crate) fn async_web_handler(
     payload: Payload,
@@ -35,6 +59,7 @@ pub(crate) fn async_web_handler(
 }
 
 pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
+    // get the config from the request
     let config: Option<&FuncConfig> = req.app_data();
 
     if config.is_none() {
@@ -45,8 +70,25 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
 
     let config = config.unwrap();
 
-    let func_res = handler::handle(config.script.as_str(), "hi");
+    // @todo do something with the config
 
+    // convert the HttpRequest to the FunctionRequest
+    let func_req = FunctionRequest::from_http_request(&req);
+
+    // attempt to serialize the FunctionRequest to pass to function handler
+    let func_req = serde_json::to_string(&func_req);
+
+    if func_req.is_err() {
+        return HttpResponse::InternalServerError().json(serde_json::json!({
+            "error": "Failed to serialize the request"
+        }));
+    }
+
+    let func_req = func_req.unwrap();
+
+    let func_res = handler::handle(config.script.as_str(), func_req.as_str());
+
+    // match the response of the function and send the response
     match (
         func_res.error,
         func_res.stderr,
@@ -64,6 +106,7 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
                 })
             }
         },
+        // else error
         (Some(err), None, None, script) => {
             let mut http_res = HttpResponse::InternalServerError();
 
