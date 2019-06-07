@@ -5,7 +5,7 @@ mod request_handler;
 use crate::config::Config;
 use actix_web::{middleware, web, App, HttpServer};
 
-use crate::request_handler::{web_handler, FuncConfig};
+use crate::request_handler::web_handler;
 use snafu::{ensure, ResultExt, Snafu};
 
 #[derive(Debug, Snafu)]
@@ -38,9 +38,7 @@ fn main() -> Result<(), Error> {
             // @todo need to actually use the method defined in the config
             app = app.service(
                 web::resource(&func.route)
-                    .data(FuncConfig {
-                        script: func.handler.clone(),
-                    })
+                    .data(func.clone())
                     .to(web_handler),
             );
         }
@@ -55,11 +53,15 @@ fn main() -> Result<(), Error> {
 
 #[cfg(test)]
 mod test {
+    use super::config::FunctionConfig;
     use super::handler::handle;
 
     #[test]
     fn test_cat() {
-        let res = handle("cat", "Hello, World!");
+        let config =
+            FunctionConfig::new("GET".to_string(), "/".to_string(), "cat".to_string(), None);
+
+        let res = handle(&config, "Hello, World!");
 
         assert!(res.error.is_none());
 

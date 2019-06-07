@@ -27,7 +27,26 @@ pub struct FunctionConfig {
     pub method: String,
     pub route: String,
     pub handler: String,
+    pub cmd: Option<String>,
     pub headers: Option<HashMap<String, String>>,
+}
+
+impl FunctionConfig {
+    #[allow(dead_code)]
+    pub fn new(
+        method: String,
+        route: String,
+        handler: String,
+        cmd: Option<String>,
+    ) -> FunctionConfig {
+        FunctionConfig {
+            method,
+            route,
+            handler,
+            cmd,
+            headers: None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

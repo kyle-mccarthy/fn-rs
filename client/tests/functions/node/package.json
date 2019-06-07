@@ -1,0 +1,11 @@
+{
+  "name": "node-fn",
+  "version": "0.0.1",
+  "description": "Test function for fn-rs",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "engine": {
+    "node": ">=10"
+  }
+}

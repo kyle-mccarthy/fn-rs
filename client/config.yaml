@@ -6,3 +6,7 @@ functions:
   - method: GET
     route: /
     handler: cat
+  - method: GET
+    route: /node
+    cmd: node
+    handler: tests/functions/node/index.js

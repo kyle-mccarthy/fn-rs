@@ -8,10 +8,7 @@ use futures::{Future, Stream};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Clone, Debug)]
-pub struct FuncConfig {
-    pub script: String,
-}
+use crate::config::FunctionConfig;
 
 /// This struct will be serialized an passed to the function
 #[derive(Debug, Serialize, Deserialize)]
@@ -48,7 +45,7 @@ impl FunctionResponse {
 /// when invoking it or an error the function encountered while running
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FunctionError {
-    script: String,
+    config: FunctionConfig,
     error: String,
 }
 
@@ -92,7 +89,7 @@ impl<'a> FunctionRequest<'a> {
 ///
 pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
     // get the config from the request
-    let config: Option<&FuncConfig> = req.app_data();
+    let config: Option<&FunctionConfig> = req.app_data();
 
     if config.is_none() {
         return HttpResponse::InternalServerError().json(serde_json::json!({
@@ -104,7 +101,7 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
 
     // convert the HttpRequest to the FunctionRequest
     let func_req = FunctionRequest::from_http_request(&req);
-    let func_res = FunctionResponse::new(config.script.clone());
+    let func_res = FunctionResponse::new(config.handler.clone());
 
     // attempt to serialize the FunctionRequest to pass to function handler
     let func_payload = FunctionPayload::new(func_req, func_res);
@@ -119,16 +116,16 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
 
     let func_payload = func_payload.unwrap();
 
-    let func_res = handler::handle(config.script.as_str(), func_payload.as_str());
+    let func_res = handler::handle(&config, func_payload.as_str());
 
     // match the response of the function and send the response
     match (
         func_res.error,
         func_res.stderr,
         func_res.stdout,
-        func_res.script,
+        func_res.config,
     ) {
-        (_, _, Some(stdout), script) => match String::from_utf8(stdout) {
+        (None, None, Some(stdout), config) => match String::from_utf8(stdout) {
             Ok(data) => {
                 let func_res = serde_json::from_str::<FunctionResponse>(&data);
 
@@ -152,21 +149,21 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
                 let err_str = "Failed to convert bytes to string".to_string();
 
                 HttpResponse::InternalServerError().json(FunctionError {
-                    script,
+                    config: config.clone(),
                     error: err_str,
                 })
             }
         },
         // else error
-        (Some(err), None, None, script) => {
+        (Some(err), None, None, config) => {
             let mut http_res = HttpResponse::InternalServerError();
 
             http_res.json(FunctionError {
-                script,
+                config: config.clone(),
                 error: format!("{}", &err),
             })
         }
-        (None, Some(stderr), None, script) => {
+        (None, Some(stderr), None, config) => {
             let mut http_res = HttpResponse::InternalServerError();
 
             let err_str = match String::from_utf8(stderr) {
@@ -175,7 +172,7 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
             };
 
             http_res.json(FunctionError {
-                script,
+                config: config.clone(),
                 error: err_str,
             })
         }
