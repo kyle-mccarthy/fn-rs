@@ -1,9 +1,10 @@
 use crate::handler;
 
-use actix_web::http::StatusCode;
 use actix_web::web::Payload;
 use actix_web::{Error, HttpRequest, HttpResponse};
 use futures::{Future, Stream};
+
+use actix_web::http::StatusCode;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -29,6 +30,9 @@ pub struct FunctionResponse {
     script: String,
     body: String,
     headers: HashMap<String, String>,
+
+    #[serde(default = FunctionResponse::default_status_code())]
+    status_code: u16,
 }
 
 impl FunctionResponse {
@@ -37,7 +41,13 @@ impl FunctionResponse {
             script,
             body: "".to_string(),
             headers: HashMap::new(),
+            status_code: 200u16,
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn default_status_code() -> u16 {
+        200u16
     }
 }
 
@@ -57,6 +67,8 @@ pub struct FunctionRequest<'a> {
     headers: HashMap<String, String>,
     query_string: String,
 
+    body: Option<String>,
+
     #[serde(skip, default)]
     inner: Option<&'a HttpRequest>,
 }
@@ -68,6 +80,7 @@ impl<'a> FunctionRequest<'a> {
             method: req.method().as_str().to_string(),
             headers: HashMap::new(),
             query_string: req.query_string().to_string(),
+            body: None,
             inner: Some(req),
         }
     }
@@ -87,7 +100,7 @@ impl<'a> FunctionRequest<'a> {
 ///
 /// If is not successful we just send the string w/o setting any special headers.
 ///
-pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
+pub(crate) fn web_handler(req: HttpRequest, payload: Option<String>) -> HttpResponse {
     // get the config from the request
     let config: Option<&FunctionConfig> = req.app_data();
 
@@ -100,8 +113,12 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
     let config = config.unwrap();
 
     // convert the HttpRequest to the FunctionRequest
-    let func_req = FunctionRequest::from_http_request(&req);
+    let mut func_req = FunctionRequest::from_http_request(&req);
     let func_res = FunctionResponse::new(config.handler.clone());
+
+    if payload.is_some() {
+        func_req.body = payload;
+    }
 
     // attempt to serialize the FunctionRequest to pass to function handler
     let func_payload = FunctionPayload::new(func_req, func_res);
@@ -135,7 +152,12 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
 
                 let func_res = func_res.unwrap();
 
-                let mut res = HttpResponse::Ok();
+                let status_code = match StatusCode::from_u16(func_res.status_code) {
+                    Ok(status_code) => status_code,
+                    _ => StatusCode::OK,
+                };
+
+                let mut res = HttpResponse::build(status_code);
 
                 if func_res.headers.len() > 0 {
                     func_res.headers.iter().for_each(|(k, v)| {
@@ -180,13 +202,81 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
     }
 }
 
-#[allow(dead_code)]
-pub(crate) fn async_web_handler(
+pub(crate) fn post_handler(
     payload: Payload,
-    _req: HttpRequest,
+    req: HttpRequest,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
-    payload
-        .concat2()
-        .from_err()
-        .and_then(|_| HttpResponse::build(StatusCode::OK).body("ok"))
+    payload.concat2().from_err().and_then(|b: bytes::Bytes| {
+        let body: Option<String> = String::from_utf8(b.as_ref().to_owned()).ok();
+        web_handler(req, body)
+    })
+}
+
+pub(crate) fn get_handler(req: HttpRequest) -> HttpResponse {
+    web_handler(req, None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::FunctionConfig;
+    use actix_web::http::{Method, StatusCode};
+    use actix_web::test::{self as test, TestRequest};
+    use actix_web::{web, App};
+
+    #[test]
+    fn test_get_req_echo() {
+        let config = FunctionConfig::new(
+            String::from("GET"),
+            String::from("/"),
+            String::from("cat"),
+            None,
+        );
+
+        let mut app =
+            test::init_service(App::new().service(web::resource("/").data(config).to(get_handler)));
+
+        let req = TestRequest::with_uri("/").method(Method::GET).to_request();
+        let res = test::call_service(&mut app, req);
+
+        assert_eq!(res.status(), StatusCode::OK);
+
+        let body_bytes = test::read_body(res);
+        let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
+
+        let func_payload: FunctionPayload = serde_json::from_str(&body_str).unwrap();
+
+        assert_eq!(func_payload.res.body, "");
+    }
+
+    #[test]
+    fn test_post_req_echo() {
+        let config = FunctionConfig::new(
+            String::from("POST"),
+            String::from("/"),
+            String::from("cat"),
+            None,
+        );
+
+        let mut app = test::init_service(
+            App::new().service(web::resource("/").data(config).to_async(post_handler)),
+        );
+
+        let req = TestRequest::with_uri("/")
+            .method(Method::POST)
+            .set_payload("hello world".as_bytes())
+            .to_request();
+        let res = test::call_service(&mut app, req);
+
+        assert_eq!(res.status(), StatusCode::OK);
+
+        let body_bytes = test::read_body(res);
+        let body_str = String::from_utf8(body_bytes.to_vec()).unwrap();
+
+        let func_payload: FunctionPayload = serde_json::from_str(&body_str).unwrap();
+
+        assert_eq!(func_payload.req.method, "POST");
+
+        assert_eq!(func_payload.req.body.unwrap(), String::from("hello world"));
+    }
 }

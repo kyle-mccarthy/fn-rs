@@ -32,7 +32,6 @@ pub struct FunctionConfig {
 }
 
 impl FunctionConfig {
-    #[allow(dead_code)]
     pub fn new(
         method: String,
         route: String,

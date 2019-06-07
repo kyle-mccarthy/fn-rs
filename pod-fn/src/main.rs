@@ -3,9 +3,10 @@ mod handler;
 mod request_handler;
 
 use crate::config::Config;
+use actix_web::http::Method;
 use actix_web::{middleware, web, App, HttpServer};
 
-use crate::request_handler::web_handler;
+use crate::request_handler::{get_handler, post_handler};
 use snafu::{ensure, ResultExt, Snafu};
 
 #[derive(Debug, Snafu)]
@@ -18,6 +19,12 @@ pub enum Error {
 
     #[snafu(display("Invalid config {}", context))]
     InvalidConfig { context: String },
+
+    #[snafu(display("Failed to convert method to bytes {}", context))]
+    MethodError { context: String },
+
+    #[snafu(display("The method type is not implemented {}", context))]
+    UnimplementedMethod { context: String },
 }
 
 fn main() -> Result<(), Error> {
@@ -35,12 +42,35 @@ fn main() -> Result<(), Error> {
         let mut app = App::new().wrap(middleware::Logger::default());
 
         for func in config.functions_iter() {
-            // @todo need to actually use the method defined in the config
-            app = app.service(
-                web::resource(&func.route)
-                    .data(func.clone())
-                    .to(web_handler),
-            );
+            let method = Method::from_bytes(func.method.to_uppercase().as_bytes());
+
+            if method.is_err() {
+                panic!(MethodError {
+                    context: func.method.clone()
+                });
+            }
+
+            let method = method.unwrap();
+
+            match method {
+                Method::POST => {
+                    app = app.service(
+                        web::resource(&func.route)
+                            .data(func.clone())
+                            .to_async(post_handler),
+                    );
+                }
+                Method::GET => {
+                    app = app.service(
+                        web::resource(&func.route)
+                            .data(func.clone())
+                            .to(get_handler),
+                    );
+                }
+                _ => panic!(UnimplementedMethod {
+                    context: func.method.clone()
+                }),
+            }
         }
 
         app

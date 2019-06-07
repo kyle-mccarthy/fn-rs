@@ -124,7 +124,5 @@ pub fn handle<'a>(config: &'a FunctionConfig, incoming: &str) -> Task<'a> {
         }
     }
 
-    dbg!(&task);
-
     task
 }

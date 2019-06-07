@@ -10,11 +10,13 @@
       <sourceFolder url="file://$MODULE_DIR$/src/client/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/client/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/client/benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/client/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/examples" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/client/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/client/benches" isTestSource="true" />
-      <excludeFolder url="file://$MODULE_DIR$/client/target" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/target" />
       <excludeFolder url="file://$MODULE_DIR$/src/client/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
