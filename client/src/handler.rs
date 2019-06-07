@@ -17,14 +17,23 @@ pub enum Error {
     },
 }
 
+/// The task contains information about what was passed to the function and what the function responded with.
 #[derive(Debug)]
 pub struct Task {
+    /// The location of the "function" - an executable that will be invoked
     pub script: String,
+
+    /// Data passed to the function
     pub stdin: Vec<u8>,
+
+    /// Data returned by the function
     pub stdout: Option<Vec<u8>>,
+
+    /// Information about an error that occurred during the functions runtime
     pub stderr: Option<Vec<u8>>,
+
+    /// Error that occurred while invoking the function
     pub error: Option<Error>,
-    //    pub content_type: String,
 }
 
 impl Task {
@@ -35,7 +44,6 @@ impl Task {
             stdout: None,
             stderr: None,
             error: None,
-            //            content_type: String::from("text/plain"),
         }
     }
 }
@@ -77,6 +85,15 @@ fn make_response(task: &mut Task, raw: Result<Output, Error>) {
     }
 }
 
+/// Returns a task which contains information about the task including the output
+///
+/// # Arguments
+/// * `script` - A string that points to location of an executable
+/// * `incoming` - The incoming data passed to the executable - serialized FunctionPayload
+///
+/// If the stdout can be deserialized to the FunctionResponse (passed in via the FunctionPayload)
+/// we will attempt to set headers and send the body. This allows for custom content types to be sent.
+///
 pub fn handle(script: &str, incoming: &str) -> Task {
     let mut task = Task::new(script.to_string(), incoming.as_bytes().to_vec());
 

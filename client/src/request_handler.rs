@@ -8,28 +8,57 @@ use futures::{Future, Stream};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Clone, Debug)]
 pub struct FuncConfig {
     pub script: String,
 }
 
+/// This struct will be serialized an passed to the function
 #[derive(Debug, Serialize, Deserialize)]
-pub struct FunctionResponse {
-    data: String,
-    script: String,
+pub struct FunctionPayload<'a> {
+    req: FunctionRequest<'a>,
+    res: FunctionResponse,
 }
 
+impl<'a> FunctionPayload<'a> {
+    fn new(req: FunctionRequest<'a>, res: FunctionResponse) -> FunctionPayload {
+        FunctionPayload { req, res }
+    }
+}
+
+/// If the function returns this struct, it will be used when sending the response
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FunctionResponse {
+    script: String,
+    body: String,
+    headers: HashMap<String, String>,
+}
+
+impl FunctionResponse {
+    fn new(script: String) -> FunctionResponse {
+        FunctionResponse {
+            script,
+            body: "".to_string(),
+            headers: HashMap::new(),
+        }
+    }
+}
+
+/// Response used f there was an issue with running the function, such as an internal error
+/// when invoking it or an error the function encountered while running
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FunctionError {
     script: String,
     error: String,
 }
 
+// Information from the HTTP Request that is forwarded to the function
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FunctionRequest<'a> {
-    path: &'a str,
-    method: &'a str,
-    headers: HashMap<&'a str, &'a str>,
-    query_string: &'a str,
+    path: String,
+    method: String,
+    headers: HashMap<String, String>,
+    query_string: String,
 
     #[serde(skip, default)]
     inner: Option<&'a HttpRequest>,
@@ -38,26 +67,29 @@ pub struct FunctionRequest<'a> {
 impl<'a> FunctionRequest<'a> {
     fn from_http_request(req: &'a HttpRequest) -> FunctionRequest<'a> {
         FunctionRequest {
-            path: req.path(),
-            method: req.method().as_str(),
+            path: req.path().to_string(),
+            method: req.method().as_str().to_string(),
             headers: HashMap::new(),
-            query_string: req.query_string(),
+            query_string: req.query_string().to_string(),
             inner: Some(req),
         }
     }
 }
 
-#[allow(dead_code)]
-pub(crate) fn async_web_handler(
-    payload: Payload,
-    _req: HttpRequest,
-) -> impl Future<Item = HttpResponse, Error = Error> {
-    payload
-        .concat2()
-        .from_err()
-        .and_then(|_| HttpResponse::build(StatusCode::OK).body("ok"))
-}
-
+/// Handles an incoming response and forwards it to the function.
+///
+/// When the function responds, we first check for errors in stderr (error occurring during function runtime)
+/// and the error prop (error that occurs during function invocation).
+///
+/// Next, if there are no errors we try to convert stdout's bytes to a string, if this fails an
+/// internal server error is sent, ending the request.
+///
+/// Next, if we were able to convert to a string, we try to convert the string into a Function Response.
+///
+/// If this is done we use that data (headers, body, etc..) to send the request.
+///
+/// If is not successful we just send the string w/o setting any special headers.
+///
 pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
     // get the config from the request
     let config: Option<&FuncConfig> = req.app_data();
@@ -70,23 +102,24 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
 
     let config = config.unwrap();
 
-    // @todo do something with the config
-
     // convert the HttpRequest to the FunctionRequest
     let func_req = FunctionRequest::from_http_request(&req);
+    let func_res = FunctionResponse::new(config.script.clone());
 
     // attempt to serialize the FunctionRequest to pass to function handler
-    let func_req = serde_json::to_string(&func_req);
+    let func_payload = FunctionPayload::new(func_req, func_res);
 
-    if func_req.is_err() {
+    let func_payload = serde_json::to_string(&func_payload);
+
+    if func_payload.is_err() {
         return HttpResponse::InternalServerError().json(serde_json::json!({
             "error": "Failed to serialize the request"
         }));
     }
 
-    let func_req = func_req.unwrap();
+    let func_payload = func_payload.unwrap();
 
-    let func_res = handler::handle(config.script.as_str(), func_req.as_str());
+    let func_res = handler::handle(config.script.as_str(), func_payload.as_str());
 
     // match the response of the function and send the response
     match (
@@ -96,7 +129,25 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
         func_res.script,
     ) {
         (_, _, Some(stdout), script) => match String::from_utf8(stdout) {
-            Ok(data) => HttpResponse::Ok().json(FunctionResponse { script, data }),
+            Ok(data) => {
+                let func_res = serde_json::from_str::<FunctionResponse>(&data);
+
+                if func_res.is_err() {
+                    return HttpResponse::Ok().body(data);
+                }
+
+                let func_res = func_res.unwrap();
+
+                let mut res = HttpResponse::Ok();
+
+                if func_res.headers.len() > 0 {
+                    func_res.headers.iter().for_each(|(k, v)| {
+                        res.header(k.as_str(), v.as_str());
+                    });
+                }
+
+                res.body(func_res.body)
+            }
             _ => {
                 let err_str = "Failed to convert bytes to string".to_string();
 
@@ -130,4 +181,15 @@ pub(crate) fn web_handler(req: HttpRequest) -> HttpResponse {
         }
         _ => HttpResponse::NotImplemented().finish(),
     }
+}
+
+#[allow(dead_code)]
+pub(crate) fn async_web_handler(
+    payload: Payload,
+    _req: HttpRequest,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    payload
+        .concat2()
+        .from_err()
+        .and_then(|_| HttpResponse::build(StatusCode::OK).body("ok"))
 }
