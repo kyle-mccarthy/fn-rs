@@ -7,7 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-snafu = "0.4.1"
 actix-web = "1.0.0"
 futures = "0.1.27"
 serde = "1.0.92"
@@ -15,3 +14,8 @@ serde_derive = "1.0.92"
 serde_json = "1.0.39"
 serde_yaml = "0.8.9"
 bytes = "0.4.12"
+uuid = { version = "0.7", features = ["serde", "v4"] }
+subprocess = "0.1.18"
+nix = "0.14.1"
+failure = "0.1.5"
+tempfile = "3.0.8"

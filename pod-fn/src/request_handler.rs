@@ -1,6 +1,6 @@
-use crate::handler;
+use crate::{handler, State};
 
-use actix_web::web::Payload;
+use actix_web::web::{Data, Payload};
 use actix_web::{Error, HttpRequest, HttpResponse};
 use futures::{Future, Stream};
 
@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::config::FunctionConfig;
+
+use crate::AppData;
 
 /// This struct will be serialized an passed to the function
 #[derive(Debug, Serialize, Deserialize)]
@@ -100,7 +102,7 @@ impl<'a> FunctionRequest<'a> {
 ///
 /// If is not successful we just send the string w/o setting any special headers.
 ///
-pub(crate) fn web_handler(req: HttpRequest, payload: Option<String>) -> HttpResponse {
+pub(crate) fn web_handler(state: State, req: HttpRequest, payload: Option<String>) -> HttpResponse {
     // get the config from the request
     let config: Option<&FunctionConfig> = req.app_data();
 
@@ -133,7 +135,7 @@ pub(crate) fn web_handler(req: HttpRequest, payload: Option<String>) -> HttpResp
 
     let func_payload = func_payload.unwrap();
 
-    let func_res = handler::handle(&config, func_payload.as_str());
+    let func_res = handler::handle(state, &config, func_payload.as_str());
 
     // match the response of the function and send the response
     match (
@@ -204,16 +206,20 @@ pub(crate) fn web_handler(req: HttpRequest, payload: Option<String>) -> HttpResp
 
 pub(crate) fn post_handler(
     payload: Payload,
+    state: State,
     req: HttpRequest,
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     payload.concat2().from_err().and_then(|b: bytes::Bytes| {
         let body: Option<String> = String::from_utf8(b.as_ref().to_owned()).ok();
-        web_handler(req, body)
+        web_handler(state, req, body)
     })
 }
 
-pub(crate) fn get_handler(req: HttpRequest) -> HttpResponse {
-    web_handler(req, None)
+pub(crate) fn get_handler(
+    state: State,
+    req: HttpRequest,
+) -> impl Future<Item = HttpResponse, Error = Error> {
+    futures::future::ok(web_handler(state, req, None))
 }
 
 #[cfg(test)]

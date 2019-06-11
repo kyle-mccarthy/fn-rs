@@ -1,22 +1,75 @@
-const readline = require('readline');
+const net = require('net');
+const fs = require('fs');
 
-async function fn() {
-  const rl = readline.createInterface(process.stdin);
+function index(req, res) {
+  res.body = 'hello';
+  return res;
+}
 
-  // read until EOL
-  const input = await new Promise((res) => {
-    rl.on('line', line => {
-      res(line);
+function handler() {
+  const server = setup(index);
+  tearDown(server);
+}
+
+function setup(onRequest) {
+  const socket = process.argv[2];
+
+  const server = net.createServer((client) => {
+    // console.log('client connected to socket');
+
+    client.on('end', () => {
+      // console.log('client disconnected');
+    });
+
+    client.on('data', (buf) => {
+      let data = buf.toString();
+      let json = JSON.parse(data);
+
+      let res = onRequest(json.req, json.res);
+
+      client.write(JSON.stringify(res));
+    });
+
+    client.on('error', (err) => {
+      console.log('client encountered error');
+      console.log(err);
     });
   });
 
-  const { req, res } = JSON.parse(input);
+  server.listen(socket, () => {
+    console.log('server bound to socket');
+  });
 
-  res.body = "hello";
 
-  process.stdout.write(JSON.stringify(res));
+  server.on('error', (err) => {
+    console.log('server encountered error');
+    console.log(err);
+  });
 
-  rl.close();
+  server.on('close', (hadErr) => {
+    if (hadErr) {
+      console.log('server gracefully closing');
+    } else {
+      console.log('server closing because of error');
+    }
+  });
+  
+  return server;
 }
 
-fn();
+function tearDown(server) {
+
+  process.on('exit', () => {
+    console.log('on exit');
+  });
+
+  process.on('SIGTERM', () => {
+    server.close(() => {
+      console.log('gracefully shitting down');
+    });
+
+    process.exit();
+  });
+}
+
+handler();

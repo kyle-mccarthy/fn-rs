@@ -3,15 +3,18 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use snafu::{ResultExt, Snafu};
+use failure::Error;
+use uuid::Uuid;
 
-#[derive(Debug, Snafu)]
-pub enum Error {
-    #[snafu(display("IO Error {}", source))]
-    IOError { source: std::io::Error },
+use std::process::Command;
 
-    #[snafu(display("Error parsing config file"))]
-    ParsingError { source: serde_yaml::Error },
+#[derive(Debug, Fail)]
+pub enum ConfigError {
+    #[fail(display = "IO Error {}", _0)]
+    IOError(std::io::Error),
+
+    #[fail(display = "Error parsing config file")]
+    ParsingError(serde_yaml::Error),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -29,9 +32,13 @@ pub struct FunctionConfig {
     pub handler: String,
     pub cmd: Option<String>,
     pub headers: Option<HashMap<String, String>>,
+
+    #[serde(default = "uuid::Uuid::new_v4")]
+    pub id: Uuid,
 }
 
 impl FunctionConfig {
+    #[allow(dead_code)]
     pub fn new(
         method: String,
         route: String,
@@ -44,6 +51,22 @@ impl FunctionConfig {
             handler,
             cmd,
             headers: None,
+            id: Uuid::new_v4(),
+        }
+    }
+
+    pub fn id(&self) -> &Uuid {
+        &self.id
+    }
+
+    pub fn cmd(&self) -> Command {
+        match &self.cmd {
+            Some(cmd) => {
+                let mut command = Command::new(cmd.as_str());
+                command.arg(&self.handler);
+                command
+            }
+            _ => Command::new(&self.handler),
         }
     }
 }
@@ -55,13 +78,13 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load() -> Result<Config, Error> {
+    pub fn load() -> Result<Config, ConfigError> {
         let filename = "config.yaml";
 
-        let file = File::open(&filename).context(IOError {})?;
+        let file = File::open(&filename).map_err(|e| ConfigError::IOError(e))?;
         let reader = BufReader::new(file);
 
-        serde_yaml::from_reader(reader).context(ParsingError {})
+        serde_yaml::from_reader(reader).map_err(|e| ConfigError::ParsingError(e))
     }
 
     pub fn functions(&self) -> &Vec<FunctionConfig> {
@@ -69,7 +92,7 @@ impl Config {
     }
 
     pub fn functions_iter(&self) -> core::slice::Iter<FunctionConfig> {
-        self.functions.iter()
+        (&self.functions).iter()
     }
 
     pub fn address(&self) -> String {
