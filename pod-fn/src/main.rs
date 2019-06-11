@@ -1,5 +1,6 @@
 mod config;
 mod handler;
+mod health;
 mod request_handler;
 mod socket;
 mod task;
@@ -71,7 +72,8 @@ fn main() -> Result<(), ServerError> {
 
         let mut app = App::new()
             .wrap(middleware::Logger::default())
-            .register_data(app_data);
+            .register_data(app_data)
+            .route("/_ah", web::get().to(health::handle));
 
         for func in config.functions_iter() {
             let method = Method::from_bytes(func.method.to_uppercase().as_bytes());

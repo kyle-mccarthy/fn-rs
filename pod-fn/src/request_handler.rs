@@ -11,8 +11,6 @@ use std::collections::HashMap;
 
 use crate::config::FunctionConfig;
 
-use crate::AppData;
-
 /// This struct will be serialized an passed to the function
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FunctionPayload<'a> {
