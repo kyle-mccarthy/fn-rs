@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 
-use failure::Error;
 use uuid::Uuid;
 
 use std::process::Command;
@@ -32,6 +31,7 @@ pub struct FunctionConfig {
     pub handler: String,
     pub cmd: Option<String>,
     pub headers: Option<HashMap<String, String>>,
+    pub runtime: String,
 
     #[serde(default = "uuid::Uuid::new_v4")]
     pub id: Uuid,
@@ -44,12 +44,14 @@ impl FunctionConfig {
         route: String,
         handler: String,
         cmd: Option<String>,
+        runtime: String,
     ) -> FunctionConfig {
         FunctionConfig {
             method,
             route,
             handler,
             cmd,
+            runtime,
             headers: None,
             id: Uuid::new_v4(),
         }

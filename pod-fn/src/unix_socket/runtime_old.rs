@@ -1,13 +1,15 @@
-use crate::config::FunctionConfig;
-use crate::socket::{Socket, SocketError};
-use crate::task::Task;
+use crate::core::config::FunctionConfig;
+use crate::unix_socket::socket::{Socket, SocketError};
 
-use crate::{AppData, HandleMap, State};
+use crate::core::state::{HandleMap, State};
 use nix::sys::signal::{kill, Signal};
 use nix::unistd::Pid;
 use std::process::Child;
 
+use crate::core::request_handler::FunctionPayload;
+use failure::Compat;
 use nix::sys::socket::SockAddr;
+use r2d2::{Pool, PooledConnection};
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 use tempfile::TempDir;
@@ -52,6 +54,12 @@ pub enum HandlerError {
 
     #[fail(display = "Failed to get writable handle from hash")]
     HashMutableHandleError,
+
+    #[fail(display = "Failed to creat pool of sockets")]
+    PoolError,
+
+    #[fail(display = "Failed to get pooled connection")]
+    PooledConnectionError,
 }
 
 impl From<SocketError> for HandlerError {
@@ -60,9 +68,9 @@ impl From<SocketError> for HandlerError {
     }
 }
 
-pub fn exec_task<'a, 'b: 'a>(data: State, task: &'a mut Task<'b>) -> Result<(), HandlerError> {
-    Handle::find_or_create_with_socket(data, task, |socket, task| task.exec(socket))
-}
+/*pub fn exec_task<'a, 'b: 'a>(data: State, task: &'a mut Task<'b>) -> Result<(), HandlerError> {
+    Handle::find_or_create_with_socket(data, task, |mut socket, task| task.exec(&mut socket))
+}*/
 
 /// Returns a task which contains information about the task including the output
 ///
@@ -73,28 +81,28 @@ pub fn exec_task<'a, 'b: 'a>(data: State, task: &'a mut Task<'b>) -> Result<(), 
 /// If the stdout can be deserialized to the FunctionResponse (passed in via the FunctionPayload)
 /// we will attempt to set headers and send the body. This allows for custom content types to be sent.
 ///
-pub fn handle<'a>(data: State, config: &'a FunctionConfig, incoming: &str) -> Task<'a> {
-    let mut task = Task::new(config, incoming.as_bytes().to_vec());
-    let output = exec_task(data, &mut task);
-
-    if let Some(stdout) = &task.stdout {
-        if stdout.len() == 0 {
-            task.stdout = None;
-        }
-    }
-
-    if let Some(stderr) = &task.stderr {
-        if stderr.len() == 0 {
-            task.stderr = None;
-        }
-    }
-
-    if let Err(err) = output {
-        task.error = Some(err);
-    }
-
-    task
-}
+//pub fn handle<'a>(data: State, config: &'a FunctionConfig, incoming: &str) -> Task<'a> {
+//    let mut task = Task::new(config, incoming.as_bytes().to_vec());
+//    let output = exec_task(data, &mut task);
+//
+//    if let Some(stdout) = &task.stdout {
+//        if stdout.len() == 0 {
+//            task.stdout = None;
+//        }
+//    }
+//
+//    if let Some(stderr) = &task.stderr {
+//        if stderr.len() == 0 {
+//            task.stderr = None;
+//        }
+//    }
+//
+//    if let Err(err) = output {
+//        task.error = Some(err);
+//    }
+//
+//    task
+//}
 
 #[derive(Debug)]
 pub struct Handle {
@@ -143,7 +151,7 @@ impl Handle {
     }
 
     pub fn make_socket(&self) -> Result<Socket, SocketError> {
-        Socket::new(self)
+        Socket::new(self.sock_addr.clone())
     }
 
     pub fn stop(&mut self) -> Result<(), HandlerError> {
@@ -158,11 +166,11 @@ impl Handle {
 
     pub fn find_or_create_with_socket<'a, 'b: 'a, F>(
         data: State,
-        task: &'a mut Task<'b>,
+        task: &'a mut FunctionPayload,
         cb: F,
     ) -> Result<(), HandlerError>
     where
-        F: Fn(Socket, &mut Task<'b>) -> Result<(), HandlerError>,
+        F: Fn(PooledConnection<Handle>, &mut FunctionPayload) -> Result<(), HandlerError>,
     {
         let handles_read = data.handles.read().map_err(|_| HandlerError::LockError)?;
         let contains_key = handles_read.contains_key(task.config.id());
@@ -177,7 +185,12 @@ impl Handle {
 
             handle.start()?;
 
-            handles_write.insert(task.config.id.clone(), Arc::new(RwLock::new(handle)));
+            let pool = Pool::builder()
+                //                .max_size(32)
+                .build(handle)
+                .map_err(|_| HandlerError::PoolError)?;
+
+            handles_write.insert(task.config.id.clone(), Arc::new(RwLock::new(pool)));
 
             drop(handles_write);
 
@@ -192,6 +205,10 @@ impl Handle {
 
         let handle = handle.write().map_err(|_| HandlerError::LockError)?;
 
-        cb(handle.make_socket()?, task)
+        let socket = handle
+            .get()
+            .map_err(|_| HandlerError::PooledConnectionError)?;
+
+        cb(socket, task)
     }
 }

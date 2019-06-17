@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = ["Kyle McCarthy <km@kylemccarthy.io>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 actix-web = "1.0.0"
 futures = "0.1.27"
@@ -19,4 +17,4 @@ subprocess = "0.1.18"
 nix = "0.14.1"
 failure = "0.1.5"
 tempfile = "3.0.8"
-
+r2d2 = "0.8.5"

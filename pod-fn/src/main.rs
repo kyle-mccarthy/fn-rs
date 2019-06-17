@@ -1,22 +1,22 @@
-mod config;
-mod handler;
+pub mod core;
+pub mod unix_socket;
+
 mod health;
-mod request_handler;
-mod socket;
-mod task;
 
 #[macro_use]
 extern crate failure;
 
-use crate::config::Config;
 use actix_web::http::Method;
 use actix_web::{middleware, web, App, HttpServer};
 
-use failure::Error;
+use failure::{Error, Fail};
 
-use crate::handler::Handle;
-use crate::request_handler::{get_handler, post_handler};
+use crate::core::config::Config;
+
+//use crate::handler::Handle;
+use crate::core::request_handler::{get_handler, post_handler};
 use actix_web::web::Data;
+use r2d2::Pool;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use uuid::Uuid;
@@ -24,7 +24,7 @@ use uuid::Uuid;
 #[derive(Debug, Fail)]
 pub enum ServerError {
     #[fail(display = "IO Error {}", _0)]
-    ConfigLoadError(config::ConfigError),
+    ConfigLoadError(core::config::ConfigError),
 
     #[fail(display = "Error parsing config file")]
     WebError(std::io::Error),
@@ -39,20 +39,7 @@ pub enum ServerError {
     UnimplementedMethod(String),
 }
 
-type HandleMap = HashMap<Uuid, Arc<RwLock<Handle>>>;
-type State = Data<AppData>;
-
-pub struct AppData {
-    pub handles: RwLock<HandleMap>,
-}
-
-impl AppData {
-    pub fn new() -> AppData {
-        AppData {
-            handles: RwLock::new(HashMap::new()),
-        }
-    }
-}
+type State = Data<crate::core::state::State>;
 
 fn main() -> Result<(), ServerError> {
     let config = Config::load().map_err(|source| ServerError::ConfigLoadError(source))?;
@@ -68,7 +55,7 @@ fn main() -> Result<(), ServerError> {
     //    let mut stream = UnixStream::connect("/var/tmp/test_socket.sock").unwrap();
 
     HttpServer::new(move || {
-        let app_data = web::Data::new(AppData::new());
+        let app_data = web::Data::new(crate::core::state::State::new());
 
         let mut app = App::new()
             .wrap(middleware::Logger::default())
@@ -110,30 +97,4 @@ fn main() -> Result<(), ServerError> {
     .map_err(|e| ServerError::WebError(e))?
     .run()
     .map_err(|e| ServerError::WebError(e))
-}
-
-#[cfg(test)]
-mod test {
-    use super::config::FunctionConfig;
-    use super::handler::handle;
-
-    //    #[test]
-    //    fn test_cat() {
-    //        let config =
-    //            FunctionConfig::new("GET".to_string(), "/".to_string(), "cat".to_string(), None);
-    //
-    //        let res = handle(&config, "Hello, World!");
-    //
-    //        assert!(res.error.is_none());
-    //
-    //        let stdout = res.stdout;
-    //
-    //        assert!(stdout.is_some());
-    //
-    //        let stdout = stdout.unwrap();
-    //        let stdout = String::from_utf8(stdout).unwrap();
-    //
-    //        assert_eq!(stdout, "Hello, World!");
-    //    }
-
 }

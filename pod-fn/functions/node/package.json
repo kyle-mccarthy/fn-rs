@@ -7,5 +7,9 @@
   "private": true,
   "engine": {
     "node": ">=10"
+  },
+  "dependencies": {
+    "fast-json-stringify": "^1.15.3",
+    "turbo-json-parse": "^2.3.0"
   }
 }

@@ -4,9 +4,7 @@ networking:
 
 functions:
   - method: GET
-    route: /
-    handler: cat
-  - method: GET
     route: /node
     cmd: node
-    handler: tests/functions/node/index.js
+    handler: functions/node/index.js
+    runtime: unix_socket

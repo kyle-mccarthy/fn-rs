@@ -1,12 +1,8 @@
 use nix::poll::{poll, PollFd, PollFlags};
-use nix::sys::socket::{recv, send, MsgFlags};
+use nix::sys::socket::{getpeername, recv, send, MsgFlags};
 use nix::sys::socket::{AddressFamily, SockAddr, SockFlag, SockType};
 use nix::unistd::{close, read, write};
 use std::os::unix::io::RawFd;
-
-use crate::handler::Handle;
-use std::path::PathBuf;
-use tempfile::TempDir;
 
 #[derive(Debug, Fail)]
 pub enum SocketError {
@@ -51,16 +47,19 @@ pub enum SocketError {
 
     #[fail(display = "Bad file number (is none?)")]
     BadFileNumber,
+
+    #[fail(display = "The socket is not health {}", _0)]
+    StatusError(nix::Error),
 }
 
 #[derive(Debug)]
-pub struct Socket<'a> {
+pub struct Socket {
     fd: RawFd,
-    handle: &'a Handle,
+    addr: SockAddr,
 }
 
-impl<'a> Socket<'a> {
-    pub fn new(handle: &'a Handle) -> Result<Socket, SocketError> {
+impl Socket {
+    pub fn new(addr: SockAddr) -> Result<Socket, SocketError> {
         let fd = nix::sys::socket::socket(
             AddressFamily::Unix,
             SockType::Stream,
@@ -69,12 +68,11 @@ impl<'a> Socket<'a> {
         )
         .map_err(|_| SocketError::CreationError)?;
 
-        Ok(Socket { fd, handle })
+        Ok(Socket { fd, addr })
     }
 
     pub fn bind(&self) -> Result<(), SocketError> {
-        nix::sys::socket::bind(self.fd(), &self.handle.sock_addr())
-            .map_err(|e| SocketError::BindError(e))
+        nix::sys::socket::bind(self.fd(), &self.addr).map_err(|e| SocketError::BindError(e))
     }
 
     pub fn listen(&self) -> Result<(), SocketError> {
@@ -86,8 +84,7 @@ impl<'a> Socket<'a> {
     }
 
     pub fn connect(&self) -> Result<(), SocketError> {
-        nix::sys::socket::connect(self.fd(), &self.handle.sock_addr())
-            .map_err(|e| SocketError::ConnectError(e))
+        nix::sys::socket::connect(self.fd(), &self.addr).map_err(|e| SocketError::ConnectError(e))
     }
 
     pub fn close(&mut self) -> Result<(), SocketError> {
@@ -106,13 +103,13 @@ impl<'a> Socket<'a> {
         write(self.fd(), buf).map_err(|e| SocketError::WriteError(e))
     }
 
-    pub fn recv(&self, buf: &'a mut [u8]) -> Result<(usize, &'a [u8]), SocketError> {
+    pub fn recv<'a>(&self, buf: &'a mut [u8]) -> Result<(usize, &'a [u8]), SocketError> {
         let bytes_read =
             recv(self.fd(), buf, MsgFlags::empty()).map_err(|e| SocketError::RecvError(e))?;
         Ok((bytes_read, buf))
     }
 
-    pub fn read(&self, buf: &'a mut [u8]) -> Result<(usize, &'a [u8]), SocketError> {
+    pub fn read<'a>(&self, buf: &'a mut [u8]) -> Result<(usize, &'a [u8]), SocketError> {
         let bytes_read = read(self.fd(), buf).map_err(|e| SocketError::ReadError(e))?;
         Ok((bytes_read, buf))
     }
@@ -141,5 +138,9 @@ impl<'a> Socket<'a> {
     pub fn poll_read(&mut self, timeout: i32) -> Result<i32, SocketError> {
         let poll_fd = PollFd::new(self.fd(), PollFlags::POLLIN);
         poll(&mut [poll_fd], timeout).map_err(|e| SocketError::PollTimeout(e))
+    }
+
+    pub fn get_peer_name(&self) -> Result<SockAddr, SocketError> {
+        getpeername(self.fd).map_err(|e| SocketError::StatusError(e))
     }
 }
