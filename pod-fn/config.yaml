@@ -8,3 +8,8 @@ functions:
     cmd: node
     handler: functions/node/index.js
     runtime: unix_socket
+
+  - method: GET
+    route: /go
+    handler: functions/golang/go-function
+    runtime: unix_socket

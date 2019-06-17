@@ -10,8 +10,9 @@ use std::process::Child;
 
 use failure::Fail;
 use nix::sys::socket::SockAddr;
+use parking_lot::RwLock;
 use std::path::PathBuf;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use tempfile::TempDir;
 
 #[derive(Debug, Fail)]
@@ -79,7 +80,7 @@ impl RuntimeManager for UnixSocketRuntime {
         let name = tempdir.path().join("sock");
 
         let sock_name = tempdir.path().join("sock");
-        let sock_addr = SockAddr::new_unix(&name).map_err(|e| UnixSocketError::AddressError)?;
+        let sock_addr = SockAddr::new_unix(&name).map_err(|_| UnixSocketError::AddressError)?;
 
         let mut runtime = UnixSocketRuntime {
             config: config.clone(),

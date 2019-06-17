@@ -2,7 +2,8 @@ use crate::core::config::FunctionConfig;
 use crate::core::request_handler::{FunctionPayload, FunctionResponse};
 use crate::core::state::AppData;
 use failure::{Error, Fail};
-use std::sync::{Arc, RwLock};
+use parking_lot::RwLock;
+use std::sync::Arc;
 
 #[derive(Debug, Fail)]
 pub enum RuntimeError {
@@ -30,6 +31,7 @@ struct Runtime {
     inner: RuntimeManager,
 }
 
+/// A runtime can be defined to allow for different approaches to function invocation
 pub trait RuntimeManager {
     fn find_or_initialize(
         data: AppData,
@@ -38,14 +40,14 @@ pub trait RuntimeManager {
     where
         Self: Sized + 'static,
     {
-        let handles_read = data.handles.read().map_err(|_| RuntimeError::LockError)?;
+        let handles_read = data.handles.read();
 
         let contains_key = handles_read.contains_key(config.id());
 
         drop(handles_read);
 
         if !contains_key {
-            let mut handles_write = data.handles.write().map_err(|_| RuntimeError::LockError)?;
+            let mut handles_write = data.handles.write();
             let runtime = Self::initialize(&config)?;
 
             handles_write.insert(config.id().clone(), runtime);
@@ -53,7 +55,7 @@ pub trait RuntimeManager {
             drop(handles_write);
         }
 
-        let handles_read = data.handles.read().map_err(|_| RuntimeError::LockError)?;
+        let handles_read = data.handles.read();
 
         let runtime = handles_read
             .get(config.id())

@@ -29,7 +29,6 @@ impl<'a> FunctionPayload<'a> {
 /// If the function returns this struct, it will be used when sending the response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FunctionResponse {
-    script: String,
     pub body: String,
     pub headers: HashMap<String, String>,
 
@@ -38,9 +37,8 @@ pub struct FunctionResponse {
 }
 
 impl FunctionResponse {
-    fn new(script: String) -> FunctionResponse {
+    fn new() -> FunctionResponse {
         FunctionResponse {
-            script,
             body: "".to_string(),
             headers: HashMap::new(),
             status_code: 200u16,
@@ -75,13 +73,16 @@ pub struct FunctionRequest<'a> {
 
     body: Option<String>,
 
+    script: String,
+
     #[serde(skip, default)]
     inner: Option<&'a HttpRequest>,
 }
 
 impl<'a> FunctionRequest<'a> {
-    fn from_http_request(req: &'a HttpRequest) -> FunctionRequest<'a> {
+    fn from_http_request(script: String, req: &'a HttpRequest) -> FunctionRequest<'a> {
         FunctionRequest {
+            script,
             path: req.path().to_string(),
             method: req.method().as_str().to_string(),
             headers: HashMap::new(),
@@ -106,7 +107,7 @@ fn handle_request(
     }
 
     let runtime = UnixSocketRuntime::find_or_initialize(data, &config)?;
-    let lock_guard = runtime.read().unwrap();
+    let lock_guard = runtime.read();
 
     lock_guard.handle_request(payload)
 }
@@ -142,8 +143,8 @@ pub(crate) fn web_handler(
     let config = config.unwrap();
 
     // convert the HttpRequest to the FunctionRequest
-    let mut func_req = FunctionRequest::from_http_request(&req);
-    let func_res = FunctionResponse::new(config.handler.clone());
+    let mut func_req = FunctionRequest::from_http_request(config.handler.clone(), &req);
+    let func_res = FunctionResponse::new();
 
     if payload.is_some() {
         func_req.body = payload;
