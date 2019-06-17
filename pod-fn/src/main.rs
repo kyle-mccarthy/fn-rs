@@ -1,25 +1,18 @@
-pub mod core;
-pub mod unix_socket;
-
-mod health;
-
 #[macro_use]
 extern crate failure;
+
+pub mod core;
+mod health;
+pub mod unix_socket;
 
 use actix_web::http::Method;
 use actix_web::{middleware, web, App, HttpServer};
 
-use failure::{Error, Fail};
+use failure::Fail;
 
 use crate::core::config::Config;
 
-//use crate::handler::Handle;
 use crate::core::request_handler::{get_handler, post_handler};
-use actix_web::web::Data;
-use r2d2::Pool;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use uuid::Uuid;
 
 #[derive(Debug, Fail)]
 pub enum ServerError {
@@ -39,8 +32,6 @@ pub enum ServerError {
     UnimplementedMethod(String),
 }
 
-type State = Data<crate::core::state::State>;
-
 fn main() -> Result<(), ServerError> {
     let config = Config::load().map_err(|source| ServerError::ConfigLoadError(source))?;
     let address = config.address();
@@ -50,9 +41,6 @@ fn main() -> Result<(), ServerError> {
             "Config must contain at least 1 function",
         ));
     }
-
-    //    let socket_add = std::os::
-    //    let mut stream = UnixStream::connect("/var/tmp/test_socket.sock").unwrap();
 
     HttpServer::new(move || {
         let app_data = web::Data::new(crate::core::state::State::new());
@@ -92,7 +80,7 @@ fn main() -> Result<(), ServerError> {
 
         app
     })
-    //    .workers(1)
+    .workers(1)
     .bind(address)
     .map_err(|e| ServerError::WebError(e))?
     .run()

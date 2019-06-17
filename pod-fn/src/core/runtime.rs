@@ -1,8 +1,7 @@
 use crate::core::config::FunctionConfig;
 use crate::core::request_handler::{FunctionPayload, FunctionResponse};
 use crate::core::state::AppData;
-use failure::{Compat, Error, Fail};
-use r2d2::ManageConnection;
+use failure::{Error, Fail};
 use std::sync::{Arc, RwLock};
 
 #[derive(Debug, Fail)]
@@ -25,8 +24,6 @@ pub enum RuntimeError {
     #[fail(display = "Runtime deleted from hash map while fetching")]
     RaceError,
 }
-
-// knows which "type" of runtime to use for each request based on the config
 
 struct Runtime {
     config: FunctionConfig,
@@ -73,7 +70,3 @@ pub trait RuntimeManager {
 
     fn handle_request(&self, payload: FunctionPayload) -> Result<FunctionResponse, failure::Error>;
 }
-
-// request comes in
-// app looks in state and looks up runtime associated with config id
-// -- if runtime does not exist

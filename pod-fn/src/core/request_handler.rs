@@ -1,4 +1,4 @@
-use actix_web::web::{Data, Payload};
+use actix_web::web::Payload;
 use actix_web::{Error, HttpRequest, HttpResponse};
 use futures::{Future, Stream};
 
@@ -8,9 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::core::config::FunctionConfig;
-use crate::core::runtime::{RuntimeError, RuntimeManager};
+use crate::core::runtime::RuntimeManager;
 use crate::core::state::AppData;
-use failure::Fail;
 
 use crate::unix_socket::runtime::UnixSocketRuntime;
 
@@ -52,6 +51,10 @@ impl FunctionResponse {
     pub fn default_status_code() -> u16 {
         200u16
     }
+
+    pub fn to_string(&self) -> Result<String, failure::Error> {
+        serde_json::to_string(self).map_err(|e| e.into())
+    }
 }
 
 /// Response used f there was an issue with running the function, such as an internal error
@@ -86,6 +89,10 @@ impl<'a> FunctionRequest<'a> {
             body: Some("".to_string()),
             inner: Some(req),
         }
+    }
+
+    pub fn to_string(&self) -> Result<String, failure::Error> {
+        serde_json::to_string(self).map_err(|e| e.into())
     }
 }
 
@@ -145,16 +152,7 @@ pub(crate) fn web_handler(
     // attempt to serialize the FunctionRequest to pass to function handler
     let func_payload = FunctionPayload::new(func_req, func_res);
 
-    //    let func_payload = serde_json::to_string(&func_payload);
-    //
-    //    if func_payload.is_err() {
-    //        return HttpResponse::InternalServerError().json(serde_json::json!({
-    //            "error": "Failed to serialize the request"
-    //        }));
-    //    }
-    //
-    //    let func_payload = func_payload.unwrap();
-
+    // the runtime manager is responsible for any serialization
     let func_res = handle_request(state, config.clone(), func_payload);
 
     match func_res {
@@ -176,72 +174,6 @@ pub(crate) fn web_handler(
         }
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
-
-    // match the response of the function and send the response
-    //    match (
-    //        func_res.error,
-    //        func_res.stderr,
-    //        func_res.stdout,
-    //        func_res.config,
-    //    ) {
-    //        (None, None, Some(stdout), config) => match String::from_utf8(stdout) {
-    //            Ok(data) => {
-    //                let func_res = serde_json::from_str::<FunctionResponse>(&data);
-    //
-    //                if func_res.is_err() {
-    //                    return HttpResponse::Ok().body(data);
-    //                }
-    //
-    //                let func_res = func_res.unwrap();
-    //
-    //                let status_code = match StatusCode::from_u16(func_res.status_code) {
-    //                    Ok(status_code) => status_code,
-    //                    _ => StatusCode::OK,
-    //                };
-    //
-    //                let mut res = HttpResponse::build(status_code);
-    //
-    //                if func_res.headers.len() > 0 {
-    //                    func_res.headers.iter().for_each(|(k, v)| {
-    //                        res.header(k.as_str(), v.as_str());
-    //                    });
-    //                }
-    //
-    //                res.body(func_res.body)
-    //            }
-    //            _ => {
-    //                let err_str = "Failed to convert bytes to string".to_string();
-    //
-    //                HttpResponse::InternalServerError().json(FunctionError {
-    //                    config: config.clone(),
-    //                    error: err_str,
-    //                })
-    //            }
-    //        },
-    //        // else error
-    //        (Some(err), None, None, config) => {
-    //            let mut http_res = HttpResponse::InternalServerError();
-    //
-    //            http_res.json(FunctionError {
-    //                config: config.clone(),
-    //                error: format!("{}", &err),
-    //            })
-    //        }
-    //        (None, Some(stderr), None, config) => {
-    //            let mut http_res = HttpResponse::InternalServerError();
-    //
-    //            let err_str = match String::from_utf8(stderr) {
-    //                Ok(err_str) => err_str,
-    //                _ => "Failed to convert to bytes to string".to_string(),
-    //            };
-    //
-    //            http_res.json(FunctionError {
-    //                config: config.clone(),
-    //                error: err_str,
-    //            })
-    //        }
-    //        _ => HttpResponse::NotImplemented().finish(),
-    //    }
 }
 
 pub(crate) fn post_handler(
