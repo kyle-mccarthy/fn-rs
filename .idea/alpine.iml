@@ -16,7 +16,42 @@
       <sourceFolder url="file://$MODULE_DIR$/client/benches" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/pod-fn/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pod-fn/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/net/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/net/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/net/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/net/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/wasm/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/wasm/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/wasm/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/core/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/unix-socket/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/unix-socket/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/unix-socket/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src/unix-socket/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/app/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/app/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/app/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/app/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/core/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/unix-socket/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/unix-socket/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/unix-socket/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/app/target" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/src/core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/src/net/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/target" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/unix-socket/target" />
+      <excludeFolder url="file://$MODULE_DIR$/pod-fn/wasm/target" />
       <excludeFolder url="file://$MODULE_DIR$/src/client/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
