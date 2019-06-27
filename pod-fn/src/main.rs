@@ -1,23 +1,19 @@
-#[macro_use]
-extern crate failure;
-
-pub mod core;
 mod health;
-pub mod unix_socket;
+mod request_handler;
 
 use actix_web::http::Method;
 use actix_web::{middleware, web, App, HttpServer};
 
 use failure::Fail;
 
-use crate::core::config::Config;
+use fn_core::config::{Config, ConfigError};
 
-use crate::core::request_handler::{get_handler, post_handler};
+use crate::request_handler::{get_handler, post_handler};
 
 #[derive(Debug, Fail)]
 pub enum ServerError {
     #[fail(display = "IO Error {}", _0)]
-    ConfigLoadError(core::config::ConfigError),
+    ConfigLoadError(ConfigError),
 
     #[fail(display = "Error parsing config file")]
     WebError(std::io::Error),
@@ -43,7 +39,7 @@ fn main() -> Result<(), ServerError> {
     }
 
     HttpServer::new(move || {
-        let app_data = web::Data::new(crate::core::state::State::new());
+        let app_data = web::Data::new(fn_core::state::State::new());
 
         let mut app = App::new()
             .wrap(middleware::Logger::default())

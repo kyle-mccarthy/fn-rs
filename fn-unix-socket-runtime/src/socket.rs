@@ -1,3 +1,4 @@
+use failure::Fail;
 use nix::poll::{poll, PollFd, PollFlags};
 use nix::sys::socket::{getpeername, recv, send, MsgFlags};
 use nix::sys::socket::{AddressFamily, SockAddr, SockFlag, SockType};

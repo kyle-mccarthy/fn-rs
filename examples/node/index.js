@@ -24,14 +24,14 @@ const parse = fastParse({
           type: 'object',
           properties: {}
         },
+        script: {
+          type: 'string',
+        },
       }
     },
     res: {
       type: 'object',
       properties: {
-        script: {
-          type: 'string',
-        },
         body: {
           type: 'string',
         },
@@ -55,9 +55,6 @@ const parse = fastParse({
 const stringify = fastStringify({
   type: 'object',
   properties: {
-    script: {
-      type: 'string',
-    },
     body: {
       type: 'string',
     },

@@ -1,0 +1,10 @@
+[workspace]
+
+members = [
+    "fn-api",
+    "fn-core",
+    "fn-wasm-runtime",
+    "fn-unix-socket-runtime",
+    "pod-fn"
+]
+

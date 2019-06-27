@@ -1,7 +1,7 @@
-use crate::core::config::FunctionConfig;
-use crate::core::request_handler::{FunctionPayload, FunctionResponse};
-use crate::core::state::AppData;
+use crate::config::FunctionConfig;
+use crate::state::AppData;
 use failure::{Error, Fail};
+use fn_api::FunctionContext;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ pub enum RuntimeError {
         display = "Encountered internal server error while handling request to function {}",
         _0
     )]
-    InternalServerError(Box<Fail>),
+    InternalServerError(Box<dyn Fail>),
 
     #[fail(display = "Encountered an error while shutting down")]
     ShutdownError(Error),
@@ -24,11 +24,6 @@ pub enum RuntimeError {
 
     #[fail(display = "Runtime deleted from hash map while fetching")]
     RaceError,
-}
-
-struct Runtime {
-    config: FunctionConfig,
-    inner: RuntimeManager,
 }
 
 /// A runtime can be defined to allow for different approaches to function invocation
@@ -70,5 +65,5 @@ pub trait RuntimeManager {
 
     fn shutdown(&mut self) -> Result<(), failure::Error>;
 
-    fn handle_request(&self, payload: FunctionPayload) -> Result<FunctionResponse, failure::Error>;
+    fn handle_request(&self, payload: FunctionContext) -> Result<Vec<u8>, failure::Error>;
 }

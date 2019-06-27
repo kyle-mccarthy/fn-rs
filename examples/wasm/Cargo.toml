@@ -1,0 +1,13 @@
+[package]
+name = "wasm"
+version = "0.1.0"
+authors = ["Kyle McCarthy <km@kylemccarthy.io>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+fn-api = { path = "./../../fn-api" }
+
+[workspace]

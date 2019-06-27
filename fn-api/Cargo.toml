@@ -1,0 +1,11 @@
+[package]
+name = "fn-api"
+version = "0.1.0"
+authors = ["Kyle McCarthy <km@kylemccarthy.io>"]
+edition = "2018"
+
+[dependencies]
+serde = { version = "1.0.93", features = ["derive"] }
+serde_json = "1.0.39"
+serde_cbor = "0.9.0"
+failure = "0.1.5"

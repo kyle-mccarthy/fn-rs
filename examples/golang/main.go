@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"fmt"
 	"log"
 	"net"
 	"os/signal"
@@ -85,8 +84,6 @@ func handleRequest(c net.Conn) {
 		_ = c.Close()
 		return
 	}
-
-	fmt.Printf("got data %s", data)
 
 	payload.Res.Body = "hello from go"
 

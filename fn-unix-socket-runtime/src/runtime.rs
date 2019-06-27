@@ -1,8 +1,7 @@
-use crate::core::config::FunctionConfig;
-use crate::core::request_handler::FunctionPayload;
-use crate::core::request_handler::FunctionResponse;
-use crate::core::runtime::RuntimeManager;
-use crate::unix_socket::socket::{Socket, SocketError};
+use crate::socket::{Socket, SocketError};
+use fn_api::{ConvertFunction, FunctionContext, FunctionResponse};
+use fn_core::config::FunctionConfig;
+use fn_core::runtime::RuntimeManager;
 
 use nix::sys::signal::{kill, Signal};
 use nix::unistd::Pid;
@@ -107,11 +106,9 @@ impl RuntimeManager for UnixSocketRuntime {
         Ok(())
     }
 
-    fn handle_request(
-        &self,
-        mut payload: FunctionPayload,
-    ) -> Result<FunctionResponse, failure::Error> {
-        let str_payload = serde_json::to_string(&payload)?;
+    fn handle_request(&self, payload: FunctionContext) -> Result<Vec<u8>, failure::Error> {
+        let json_payload = payload.to_string()?;
+        let bytes = json_payload.into_bytes();
 
         let mut socket = self.make_socket()?;
 
@@ -119,17 +116,19 @@ impl RuntimeManager for UnixSocketRuntime {
 
         socket.poll_write(2500)?;
 
-        socket.write(str_payload.as_bytes())?;
+        socket.write(&bytes)?;
 
         socket.poll_read(2500)?;
 
         let (_, buf) = socket.read_all()?;
 
-        payload.res.body = String::from_utf8(buf.to_vec())?;
-
         socket.close()?;
 
-        Ok(payload.res)
+        let str_res = String::from_utf8_lossy(&buf).to_string();
+        let json_res = FunctionResponse::from_str(&str_res)?;
+        let bytes_res = json_res.to_bytes()?;
+
+        Ok(bytes_res)
     }
 }
 

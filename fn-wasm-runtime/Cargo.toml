@@ -1,0 +1,13 @@
+[package]
+name = "fn-wasm-runtime"
+version = "0.1.0"
+authors = ["Kyle McCarthy <kyle@creativeanvil.com>"]
+edition = "2018"
+
+[dependencies]
+fn-core = { path = "./../fn-core" }
+fn-api = { path = "./../fn-api" }
+parking_lot = "0.8.0"
+wasmer-runtime = "0.4.2"
+wasmer-clif-backend = "0.4.2"
+failure = "0.1.5"

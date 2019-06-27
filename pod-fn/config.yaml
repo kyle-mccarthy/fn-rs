@@ -6,10 +6,16 @@ functions:
   - method: GET
     route: /node
     cmd: node
-    handler: functions/node/index.js
+    handler: ./../examples/node/index.js
     runtime: unix_socket
 
   - method: GET
     route: /go
-    handler: functions/golang/go-function
+    handler: ./../examples/golang/go-function
     runtime: unix_socket
+
+  - method: GET
+    route: /wasm
+    handler: ./../examples/wasm/target/wasm32-unknown-unknown/debug/wasm.wasm
+#    handler: functions/wasm/pkg/wasm_bg.wasm
+    runtime: wasm

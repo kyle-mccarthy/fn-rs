@@ -1,8 +1,8 @@
+use failure::Fail;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
-
 use uuid::Uuid;
 
 use std::process::Command;

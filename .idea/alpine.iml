@@ -45,6 +45,34 @@
       <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/pod-fn/wasm/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/wasm/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/functions/wasm/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/functions/wasm/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod-fn/functions/wasm/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-api/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-api/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-api/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-api/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-core/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-wasm-runtime/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-wasm-runtime/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-wasm-runtime/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-wasm-runtime/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-unix-socket-runtime/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-unix-socket-runtime/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-unix-socket-runtime/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-unix-socket-runtime/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/wasm/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/wasm/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/examples/wasm/benches" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/wasm/target" />
+      <excludeFolder url="file://$MODULE_DIR$/fn-api/target" />
+      <excludeFolder url="file://$MODULE_DIR$/fn-core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/fn-unix-socket-runtime/target" />
+      <excludeFolder url="file://$MODULE_DIR$/fn-wasm-runtime/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/app/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/core/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/src/core/target" />

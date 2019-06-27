@@ -1,0 +1,13 @@
+[package]
+name = "fn-unix-socket-runtime"
+version = "0.1.0"
+authors = ["Kyle McCarthy <kyle@creativeanvil.com>"]
+edition = "2018"
+
+[dependencies]
+fn-api = { path = "./../fn-api" }
+fn-core = { path = "./../fn-core" }
+nix = "0.14.1"
+failure = "0.1.5"
+parking_lot = "0.8.0"
+tempfile = "3.0.8"
