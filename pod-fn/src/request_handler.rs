@@ -14,8 +14,8 @@ use fn_wasm_runtime::runtime::WasmRuntime;
 use actix_web::dev::Body;
 use bytes::Bytes;
 
-/// This struct will be serialized an passed to the function
-
+/// Determine the runtime to use from the FunctionConfig and send the request to that runtime.
+/// If the runtime has not been initialized, this will result in a cold start for the function.
 fn handle_request(
     data: AppData,
     config: FunctionConfig,
@@ -91,8 +91,6 @@ pub(crate) fn web_handler(state: AppData, req: HttpRequest, payload: Option<&str
 
             let func_res = res.unwrap();
 
-            dbg!(&func_res);
-
             let status_code = match StatusCode::from_u16(func_res.status_code) {
                 Ok(status_code) => status_code,
                 _ => StatusCode::OK,
@@ -112,6 +110,7 @@ pub(crate) fn web_handler(state: AppData, req: HttpRequest, payload: Option<&str
     }
 }
 
+/// Handles POST request to the gateway
 pub(crate) fn post_handler(
     payload: Payload,
     state: AppData,
@@ -123,6 +122,7 @@ pub(crate) fn post_handler(
     })
 }
 
+/// Handles GET request to the gateway
 pub(crate) fn get_handler(
     state: AppData,
     req: HttpRequest,
