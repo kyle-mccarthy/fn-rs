@@ -10,7 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/client/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/client/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/client/benches" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/pod-fn/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/client/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/pod-fn/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/client/benches" isTestSource="true" />
@@ -68,9 +68,17 @@
       <sourceFolder url="file://$MODULE_DIR$/examples/wasm/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/examples/wasm/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/examples/wasm/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/pod/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/pod/benches" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-gateway/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-gateway/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-gateway/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/fn-gateway/benches" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/examples/wasm/target" />
       <excludeFolder url="file://$MODULE_DIR$/fn-api/target" />
       <excludeFolder url="file://$MODULE_DIR$/fn-core/target" />
+      <excludeFolder url="file://$MODULE_DIR$/fn-gateway/target" />
       <excludeFolder url="file://$MODULE_DIR$/fn-unix-socket-runtime/target" />
       <excludeFolder url="file://$MODULE_DIR$/fn-wasm-runtime/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/app/target" />
@@ -80,6 +88,7 @@
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/unix-socket/target" />
       <excludeFolder url="file://$MODULE_DIR$/pod-fn/wasm/target" />
+      <excludeFolder url="file://$MODULE_DIR$/pod/target" />
       <excludeFolder url="file://$MODULE_DIR$/src/client/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>

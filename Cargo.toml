@@ -5,6 +5,7 @@ members = [
     "fn-core",
     "fn-wasm-runtime",
     "fn-unix-socket-runtime",
-    "pod-fn"
+    "fn-gateway",
+    "pod"
 ]
 

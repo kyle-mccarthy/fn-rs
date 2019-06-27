@@ -1,19 +1,19 @@
 [package]
-name = "pod_fn"
+name = "fn-gateway"
 version = "0.1.0"
 authors = ["Kyle McCarthy <km@kylemccarthy.io>"]
 edition = "2018"
 
 [dependencies]
-actix-web = "1.0.0"
+actix-web = "1.0.2"
+failure = "0.1.5"
+actix-service = "0.4.1"
 futures = "0.1.27"
-bincode = "1.1.4"
 serde_cbor = "0.9.0"
 fn-unix-socket-runtime = { path = "./../fn-unix-socket-runtime" }
 fn-wasm-runtime = { path = "./../fn-wasm-runtime" }
 fn-core = { path = "./../fn-core" }
 fn-api = { path = "./../fn-api" }
-failure = "0.1.5"
 bytes = "0.4.12"
 serde_json = "1.0.39"
 serde = { version = "1.0.93", features = ["derive"] }

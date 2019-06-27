@@ -1,13 +1,11 @@
 [package]
-name = "fn-wasm-runtime"
+name = "pod"
 version = "0.1.0"
 authors = ["Kyle McCarthy <km@kylemccarthy.io>"]
 edition = "2018"
 
 [dependencies]
+actix-web = "1.0.0"
 fn-core = { path = "./../fn-core" }
-fn-api = { path = "./../fn-api" }
-parking_lot = "0.8.0"
-wasmer-runtime = "0.4.2"
-wasmer-clif-backend = "0.4.2"
+fn-gateway = { path = "./../fn-gateway" }
 failure = "0.1.5"

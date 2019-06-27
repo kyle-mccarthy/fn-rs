@@ -1,7 +1,7 @@
 [package]
 name = "fn-unix-socket-runtime"
 version = "0.1.0"
-authors = ["Kyle McCarthy <kyle@creativeanvil.com>"]
+authors = ["Kyle McCarthy <km@kylemccarthy.io>"]
 edition = "2018"
 
 [dependencies]

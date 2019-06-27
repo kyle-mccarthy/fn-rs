@@ -158,22 +158,21 @@ impl RuntimeManager for WasmRuntime {
     }
 }
 
-fn print(ctx: &mut Ctx, ptr: u32, len: u32) {
+fn load_str(ctx: &mut Ctx, ptr: u32, len: u32) -> String {
     let memory = ctx.memory(0);
-
-    dbg!(format!("println ptr {} len {}", ptr, len));
 
     let str_slice = &memory.view()[ptr as usize..(ptr + len) as usize]
         .iter()
         .map(|cell| cell.get())
         .collect::<Vec<u8>>();
 
-    let str_utf8 = std::str::from_utf8(&str_slice);
+    std::string::String::from_utf8_lossy(str_slice).into_owned()
+}
 
-    match str_utf8 {
-        Ok(str) => println!("{}", str),
-        Err(e) => {
-            dbg!(e);
-        }
-    }
+fn print(ctx: &mut Ctx, ptr: u32, len: u32) {
+    dbg!(format!("println ptr {} len {}", ptr, len));
+
+    let str = load_str(ctx, ptr, len);
+
+    println!("{}", str);
 }

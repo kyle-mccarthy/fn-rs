@@ -129,6 +129,3 @@ pub(crate) fn get_handler(
 ) -> impl Future<Item = HttpResponse, Error = Error> {
     futures::future::ok(web_handler(state, req, None))
 }
-
-#[cfg(test)]
-mod tests {}

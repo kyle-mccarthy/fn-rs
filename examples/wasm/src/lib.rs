@@ -19,19 +19,19 @@ pub fn handle_request(ptr: *mut i32, len: i32) -> i32 {
 
     let res_bytes = res.to_bytes().unwrap();
 
-    let debug = format!("res_bytes (wasm) : {}", res_bytes.len());
-    unsafe {
-        print(debug.as_ptr() as i32, debug.len() as i32);
-    }
+    //    let debug = format!("res_bytes (wasm) : {}", res_bytes.len());
+    //    unsafe {
+    //        print(debug.as_ptr() as i32, debug.len() as i32);
+    //    }
 
     let wasm_response = WasmResponse::new(res_bytes.as_ptr() as i32, res_bytes.len() as i32);
 
     let bytes = wasm_response.to_bytes().unwrap();
 
-    let debug = format!("wasm_res_bytes (wasm) : {}", bytes.len());
-    unsafe {
-        print(debug.as_ptr() as i32, debug.len() as i32);
-    }
+    //    let debug = format!("wasm_res_bytes (wasm) : {}", bytes.len());
+    //    unsafe {
+    //        print(debug.as_ptr() as i32, debug.len() as i32);
+    //    }
 
     bytes.as_ptr() as i32
 }
