@@ -93,8 +93,8 @@ impl RuntimeManager for WasmRuntime {
         Ok(())
     }
 
-    fn handle_request(&self, payload: FunctionContext) -> Result<Vec<u8>, failure::Error> {
-        let data = payload.to_bytes()?;
+    fn handle_request(&self, ctx: FunctionContext) -> Result<Vec<u8>, failure::Error> {
+        let data = ctx.to_bytes()?;
         let import_object = imports! {
             "env" => {
                 "print" => func!(print),
@@ -169,6 +169,7 @@ fn load_str(ctx: &mut Ctx, ptr: u32, len: u32) -> String {
     std::string::String::from_utf8_lossy(str_slice).into_owned()
 }
 
+/// passed to WebAssembly functions, to be used for debugging
 fn print(ctx: &mut Ctx, ptr: u32, len: u32) {
     dbg!(format!("println ptr {} len {}", ptr, len));
 

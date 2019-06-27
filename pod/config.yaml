@@ -17,5 +17,4 @@ functions:
   - method: GET
     route: /wasm
     handler: ./../examples/wasm/target/wasm32-unknown-unknown/debug/wasm.wasm
-#    handler: functions/wasm/pkg/wasm_bg.wasm
     runtime: wasm

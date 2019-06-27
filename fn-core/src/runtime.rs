@@ -59,11 +59,14 @@ pub trait RuntimeManager {
         Ok(runtime.clone())
     }
 
+    /// Used to initialize a function that is cold. If successful, the runtime will be inserted into
+    /// a cache, keyed by the ID
     fn initialize(config: &FunctionConfig) -> Result<Arc<RwLock<Self>>, failure::Error>
     where
         Self: Sized;
 
+    /// Cleanup up a function before it is shut down, not currently called before halting the server...
     fn shutdown(&mut self) -> Result<(), failure::Error>;
 
-    fn handle_request(&self, payload: FunctionContext) -> Result<Vec<u8>, failure::Error>;
+    fn handle_request(&self, ctx: FunctionContext) -> Result<Vec<u8>, failure::Error>;
 }

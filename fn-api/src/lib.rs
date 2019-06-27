@@ -25,11 +25,14 @@ pub trait ConvertFunction<'a>: Sized + Deserialize<'a> + Serialize {
     }
 }
 
+/// The FunctionContext contains data passed into a function when it is invoked. This is made up of
+/// information from the incoming HTTP request as well as the FunctionResponse.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FunctionContext<'a> {
+    /// Contains data from the incoming HTTP request
     #[serde(borrow = "'a")]
     pub req: FunctionRequest<'a>,
-
+    /// Used to construct the HTTP response
     pub res: FunctionResponse,
 }
 
@@ -65,10 +68,6 @@ impl FunctionResponse {
     #[allow(dead_code)]
     pub fn default_status_code() -> u16 {
         200u16
-    }
-
-    pub fn to_string(&self) -> Result<String, failure::Error> {
-        serde_json::to_string(self).map_err(|e| e.into())
     }
 }
 

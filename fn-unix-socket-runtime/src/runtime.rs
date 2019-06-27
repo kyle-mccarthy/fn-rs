@@ -106,8 +106,8 @@ impl RuntimeManager for UnixSocketRuntime {
         Ok(())
     }
 
-    fn handle_request(&self, payload: FunctionContext) -> Result<Vec<u8>, failure::Error> {
-        let json_payload = payload.to_string()?;
+    fn handle_request(&self, ctx: FunctionContext) -> Result<Vec<u8>, failure::Error> {
+        let json_payload = ctx.to_string()?;
         let bytes = json_payload.into_bytes();
 
         let mut socket = self.make_socket()?;

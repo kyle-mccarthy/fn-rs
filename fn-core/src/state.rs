@@ -8,6 +8,7 @@ use uuid::Uuid;
 pub type HandleMap = HashMap<Uuid, Arc<RwLock<dyn RuntimeManager>>>;
 pub type AppData = Data<State>;
 
+/// The app contains a cache for functions, this keeps functions hot and eliminates the startup penalty
 pub struct State {
     pub handles: RwLock<HandleMap>,
 }

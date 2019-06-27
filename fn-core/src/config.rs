@@ -1,6 +1,5 @@
 use failure::Fail;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use uuid::Uuid;
@@ -26,13 +25,18 @@ pub struct NetworkingConfig {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FunctionConfig {
+    /// HTTP method that the function handles
     pub method: String,
+    /// Route that the function is bound to
     pub route: String,
+    /// Path to the script which defines the function
     pub handler: String,
+    /// Optional command to execute the handler, this is used when the handler script isn't executable
+    /// such as with a node function
     pub cmd: Option<String>,
-    pub headers: Option<HashMap<String, String>>,
+    /// Runtime of the function (ex: wasm, unix_socket)
     pub runtime: String,
-
+    /// Generated automatically, used as the cache key
     #[serde(default = "uuid::Uuid::new_v4")]
     pub id: Uuid,
 }
@@ -52,7 +56,6 @@ impl FunctionConfig {
             handler,
             cmd,
             runtime,
-            headers: None,
             id: Uuid::new_v4(),
         }
     }
@@ -61,6 +64,7 @@ impl FunctionConfig {
         &self.id
     }
 
+    /// Create the command for executing the function
     pub fn cmd(&self) -> Command {
         match &self.cmd {
             Some(cmd) => {
@@ -80,7 +84,9 @@ pub struct Config {
 }
 
 impl Config {
+    /// Attempt to load the config
     pub fn load() -> Result<Config, ConfigError> {
+        // @todo probably should be configurable in some way
         let filename = "config.yaml";
 
         let file = File::open(&filename).map_err(|e| ConfigError::IOError(e))?;
@@ -97,6 +103,7 @@ impl Config {
         (&self.functions).iter()
     }
 
+    /// Formatted address to bind the HTTP server to
     pub fn address(&self) -> String {
         format!("{}:{}", &self.networking.host, &self.networking.port)
     }
